@@ -20,7 +20,7 @@ For a complete example of the lobby usage check `Assets/NetickSteamDemo/SteamNet
  - Join friends lobbies with the "Join Friend" button on steam
  - Public lobby browser with distance queries
  - Steam command line to auto-join lobbies on startup, when the game is started by clicking "join friend" on steam
- - Voice Chat (hold V to record and transmit steam voice data)
+ - ~~Voice Chat (hold V to record and transmit steam voice data)~~ (not yet)
 
 ## Additional Documentation
 [Netick](https://netick.net/docs/2) | [Steamworks.NET](https://steamworks.github.io/) | [Steamworks](https://partner.steamgames.com/doc/home)
