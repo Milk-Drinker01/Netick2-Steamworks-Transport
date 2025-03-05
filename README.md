@@ -23,4 +23,4 @@ For a complete example of the lobby usage check `Assets/NetickSteamDemo/SteamNet
  - Voice Chat (hold V to record and transmit steam voice data)
 
 ## Additional Documentation
-[Netick](https://netick.net/docs/2) | [Steamworks.NET](https://steamworks.github.io/)) | [Steamworks](https://partner.steamgames.com/doc/home)
+[Netick](https://netick.net/docs/2) | [Steamworks.NET](https://steamworks.github.io/) | [Steamworks](https://partner.steamgames.com/doc/home)
