@@ -12,6 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f801b3335d4eb79448c47511052b49ba, type: 3}
   m_Name: SteamworksTransport
   m_EditorClassIdentifier: 
-  SteamDataSendType: 1
+  SteamDataSendType: 2
   FlushMessages: 1
-  logLevel: 0
