@@ -7,14 +7,17 @@ using System.Net;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using Network = Netick.Unity.Network;
+using static Netick.Transports.Steamworks.SteamworksTransportProvider;
 
 namespace Netick.Transports.Steamworks
 {
     [CreateAssetMenu(fileName = "SteamworksTransport", menuName = "Netick/Transport/SteamworksTransport", order = 2)]
     public class SteamworksTransportProvider : NetworkTransportProvider
     {
+        //[SerializeField]
+        //EP2PSend SteamDataSendType = EP2PSend.k_EP2PSendUnreliableNoDelay;
         [SerializeField]
-        EP2PSend SteamDataSendType = EP2PSend.k_EP2PSendUnreliableNoDelay;
+        SteamSendType SteamDataSendType = SteamSendType.NoNagle;
 
         [SerializeField]
         bool FlushMessages = true;
@@ -27,6 +30,14 @@ namespace Netick.Transports.Steamworks
         }
 #endif
         public override NetworkTransport MakeTransportInstance() => new SteamworksTransport(SteamDataSendType, FlushMessages);
+
+        public enum SteamSendType : int
+        {
+            Unreliable = 0,
+            Reliable = 1,
+            NoNagle = 2,
+            NoDelay = 3
+        }
     }
 
     public class SteamworksTransport : NetworkTransport
@@ -81,20 +92,20 @@ namespace Netick.Transports.Steamworks
 
         public bool IsServer;
 
-        public SteamworksTransport(EP2PSend sendType, bool forceFlush)
+        public SteamworksTransport(SteamSendType sendType, bool forceFlush)
         {
             SetSendType(sendType);
             ForceFlush = forceFlush;
         }
 
-        public static void SetSendType(EP2PSend sendType)
+        public static void SetSendType(SteamSendType sendType)
         {
             switch (sendType)
             {
-                case EP2PSend.k_EP2PSendUnreliable: SteamSendFlag = Constants.k_nSteamNetworkingSend_Unreliable; break;
-                case EP2PSend.k_EP2PSendUnreliableNoDelay: SteamSendFlag = Constants.k_nSteamNetworkingSend_UnreliableNoDelay; break;
-                case EP2PSend.k_EP2PSendReliable: SteamSendFlag = Constants.k_nSteamNetworkingSend_Reliable; break;
-                case EP2PSend.k_EP2PSendReliableWithBuffering: SteamSendFlag = Constants.k_nSteamNetworkingSend_Reliable; break;
+                case SteamSendType.Unreliable: SteamSendFlag = Constants.k_nSteamNetworkingSend_Unreliable; break;
+                case SteamSendType.Reliable: SteamSendFlag = Constants.k_nSteamNetworkingSend_Reliable; break;
+                case SteamSendType.NoNagle: SteamSendFlag = Constants.k_nSteamNetworkingSend_UnreliableNoNagle; break;
+                case SteamSendType.NoDelay: SteamSendFlag = Constants.k_nSteamNetworkingSend_UnreliableNoDelay; break;
             }
         }
 
