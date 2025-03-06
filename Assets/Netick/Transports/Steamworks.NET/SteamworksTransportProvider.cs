@@ -14,8 +14,6 @@ namespace Netick.Transports.Steamworks
     [CreateAssetMenu(fileName = "SteamworksTransport", menuName = "Netick/Transport/SteamworksTransport", order = 2)]
     public class SteamworksTransportProvider : NetworkTransportProvider
     {
-        //[SerializeField]
-        //EP2PSend SteamDataSendType = EP2PSend.k_EP2PSendUnreliableNoDelay;
         [SerializeField]
         SteamSendType SteamDataSendType = SteamSendType.NoNagle;
 
