@@ -16,6 +16,16 @@ public class SteamLobbyExample : MonoBehaviour
     public static event Action OnGameServerShutdown;
     public static CSteamID CurrentLobby;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void OnLoad()
+    {
+        OnLobbyEnteredEvent = delegate { };
+        OnLobbyLeftEvent = delegate { };
+        OnLobbySearchStart = delegate { };
+        OnLobbySearchFinished = delegate { };
+        OnGameServerShutdown = delegate { };
+    }
+
     public static bool OwnsCurrentLobby => SteamMatchmaking.GetLobbyOwner(CurrentLobby) == SteamUser.GetSteamID();
 
     [SerializeField] bool AutoStartServerWithLobby = true;

@@ -7,7 +7,6 @@ using System.Net;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using Network = Netick.Unity.Network;
-using static Netick.Transports.Steamworks.SteamworksTransport;
 
 namespace Netick.Transports.Steamworks
 {
@@ -23,7 +22,7 @@ namespace Netick.Transports.Steamworks
 #if UNITY_EDITOR
         public void OnValidate()
         {
-            SteamworksTransport.SteamSendType = SteamDataSendType;
+            SteamworksTransport.SetSendType(SteamDataSendType);
             SteamworksTransport.ForceFlush = FlushMessages;
         }
 #endif
@@ -32,6 +31,18 @@ namespace Netick.Transports.Steamworks
 
     public class SteamworksTransport : NetworkTransport
     {
+        public static event Action OnNetickServerStarted;
+        public static event Action OnNetickClientStarted;
+        public static event Action OnNetickShutdownEvent;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void OnLoad()
+        {
+            OnNetickServerStarted = delegate { };
+            OnNetickClientStarted = delegate { };
+            OnNetickShutdownEvent = delegate { };
+        }
+
         public class SteamworksConnection : TransportConnection
         {
             public SteamworksTransport Transport;
@@ -41,21 +52,21 @@ namespace Netick.Transports.Steamworks
             public override int Mtu => Constants.k_cbMaxSteamNetworkingSocketsMessageSizeSend;
             public unsafe override void Send(IntPtr ptr, int length)
             {
-                SteamNetworkingSockets.SendMessageToConnection(Connection, ptr, (uint)length, Constants.k_nSteamNetworkingSend_Unreliable, out long _);
+                SteamNetworkingSockets.SendMessageToConnection(Connection, ptr, (uint)length, SteamSendFlag, out long _);
                 if (SteamworksTransport.ForceFlush)
                     SteamNetworkingSockets.FlushMessagesOnConnection(Connection);
             }
             public unsafe override void SendUserData(IntPtr ptr, int length, TransportDeliveryMethod method)
             {
                 int sendType = method == TransportDeliveryMethod.Unreliable ? Constants.k_nSteamNetworkingSend_Unreliable : Constants.k_nSteamNetworkingSend_Reliable;
-                SteamNetworkingSockets.SendMessageToConnection(Connection, ptr, (uint)length, Constants.k_nSteamNetworkingSend_Unreliable, out long _);
+                SteamNetworkingSockets.SendMessageToConnection(Connection, ptr, (uint)length, sendType, out long _);
             }
         }
 
         const int MAX_MESSAGES = 256;
         IntPtr[] _ptrs = new IntPtr[MAX_MESSAGES];
 
-        public static EP2PSend SteamSendType = EP2PSend.k_EP2PSendUnreliableNoDelay;
+        public static int SteamSendFlag = 0;
         public static bool ForceFlush;
 
         static readonly Dictionary<HSteamNetConnection, SteamworksConnection> InternalConnections = new Dictionary<HSteamNetConnection, SteamworksConnection>();
@@ -72,13 +83,22 @@ namespace Netick.Transports.Steamworks
 
         public SteamworksTransport(EP2PSend sendType, bool forceFlush)
         {
-            SteamSendType = sendType;
+            SetSendType(sendType);
             ForceFlush = forceFlush;
         }
+
+        public static void SetSendType(EP2PSend sendType)
+        {
+            switch (sendType)
+            {
+                case EP2PSend.k_EP2PSendUnreliable: SteamSendFlag = Constants.k_nSteamNetworkingSend_Unreliable; break;
+                case EP2PSend.k_EP2PSendUnreliableNoDelay: SteamSendFlag = Constants.k_nSteamNetworkingSend_UnreliableNoDelay; break;
+                case EP2PSend.k_EP2PSendReliable: SteamSendFlag = Constants.k_nSteamNetworkingSend_Reliable; break;
+                case EP2PSend.k_EP2PSendReliableWithBuffering: SteamSendFlag = Constants.k_nSteamNetworkingSend_Reliable; break;
+            }
+        }
+
         public static ulong SteamID { get; private set; }
-        public static event Action OnNetickServerStarted;
-        public static event Action OnNetickClientStarted;
-        public static event Action OnNetickShutdownEvent;
 
         public static ulong GetPlayerSteamID(NetworkPlayer player)
         {
