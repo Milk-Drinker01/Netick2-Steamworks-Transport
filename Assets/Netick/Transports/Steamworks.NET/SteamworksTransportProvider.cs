@@ -288,7 +288,7 @@ namespace Netick.Transports.Steamworks
         void ServerOnConnecting(SteamNetConnectionStatusChangedCallback_t param)
         {
             ulong clientSteamID = param.m_info.m_identityRemote.GetSteamID64();
-            if (Engine.ConnectedPlayers.Count == Engine.MaxClients)
+            if (Engine.Players.Count == Engine.MaxClients)
             {
                 Debug.Log($"[{nameof(SteamworksTransport)}] - Declining connection from Steam user {clientSteamID}. (server is full)");
                 SteamNetworkingSockets.CloseConnection(param.m_hConn, 0, "Max Connection Count", false);
