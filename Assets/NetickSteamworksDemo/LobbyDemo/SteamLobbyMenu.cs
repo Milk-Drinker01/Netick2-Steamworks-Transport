@@ -19,6 +19,22 @@ namespace Netick.Examples.Steam
         public Button StartServerButton;
         public Button ConnectToServerButton;
         public Button StopServerButton;
+
+        private Stack<SteamLobbyButton> _lobbyPool = new Stack<SteamLobbyButton>();
+        private List<SteamLobbyButton> _activeLobbyButtons = new List<SteamLobbyButton>();
+
+        private SteamLobbyButton GetLobbyButton()
+        {
+            if (_lobbyPool.TryPop(out SteamLobbyButton button))
+            {
+                if (button == null)
+                    return GetLobbyButton();
+                return button;
+            }
+            var lobbyGO = Instantiate(LobbyInfoPrefab, LobbyContent.transform);
+            return lobbyGO.GetComponent<SteamLobbyButton>();
+        }
+
         private void Awake()
         {
             if (instance == null)
@@ -70,19 +86,22 @@ namespace Netick.Examples.Steam
 
         public void ClearLobbyList()
         {
-            for (int i = 0; i < LobbyContent.transform.childCount; i++)
-                Destroy(LobbyContent.transform.GetChild(i).gameObject);
+            for (int i = 0; i < _activeLobbyButtons.Count; i++)
+            {
+                _activeLobbyButtons[i].gameObject.SetActive(false);
+                _lobbyPool.Push(_activeLobbyButtons[i]);
+            }
+            _activeLobbyButtons.Clear();
         }
 
         public void UpdateLobbyList(List<CSteamID> LobbyList)
         {
             foreach (var lobby in LobbyList)
             {
-                var lobbyGO = Instantiate(LobbyInfoPrefab, LobbyContent.transform);
-                lobbyGO.transform.GetChild(0).GetComponent<Text>().text = SteamMatchmaking.GetLobbyData(lobby, "LobbyName");
-                lobbyGO.GetComponent<Button>().onClick.AddListener(() => {
-                    SteamLobbyExample.JoinLobby(lobby);
-                });
+                SteamLobbyButton lobbyButton = GetLobbyButton();
+                _activeLobbyButtons.Add(lobbyButton);
+                lobbyButton.gameObject.SetActive(true);
+                lobbyButton.SetupButton(lobby);
             }
         }
 

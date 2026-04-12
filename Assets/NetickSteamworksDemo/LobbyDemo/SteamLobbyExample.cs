@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
 using Netick.Unity;
 using Steamworks;
 using Netick.Transports.Steamworks;
-using UnityEditor.Search;
 
 public class SteamLobbyExample : MonoBehaviour
 {
+    public const string LobbyNameKey = "LobbyName";
+    public const string LobbyLocationKey = "PingLocation";
+
     public static event Action<CSteamID> OnLobbyEnteredEvent;
     public static event Action OnLobbyLeftEvent;
     public static event Action OnLobbySearchStart;
@@ -84,7 +87,7 @@ public class SteamLobbyExample : MonoBehaviour
         void OnLobbyEntered(LobbyEnter_t callback)
         {
             CSteamID lobby = (CSteamID)callback.m_ulSteamIDLobby;
-            Debug.Log($"You joined {SteamMatchmaking.GetLobbyData(lobby, "LobbyName")}");
+            Debug.Log($"You joined {SteamMatchmaking.GetLobbyData(lobby, LobbyNameKey)}");
             CurrentLobby = lobby;
             _lobbyOwner = SteamMatchmaking.GetLobbyOwner(lobby);
             OnLobbyEnteredEvent?.Invoke(lobby);
@@ -197,7 +200,8 @@ public class SteamLobbyExample : MonoBehaviour
     {
         CSteamID lobby = (CSteamID)callback.m_ulSteamIDLobby;
         SteamMatchmaking.SetLobbyData(lobby, "GameName", GameName);
-        SteamMatchmaking.SetLobbyData(lobby, "LobbyName", $"{SteamFriends.GetPersonaName()}'s lobby.");
+        SteamMatchmaking.SetLobbyData(lobby, LobbyNameKey, $"{SteamFriends.GetPersonaName()}'s lobby.");
+        StartCoroutine(WaitForPingLocation());
         SteamMatchmaking.SetLobbyJoinable(lobby, true);
 
         CurrentLobby = lobby;
@@ -219,6 +223,24 @@ public class SteamLobbyExample : MonoBehaviour
 
         if (AutoStartServerWithLobby)
             StartGameServer();
+    }
+
+    IEnumerator WaitForPingLocation()
+    {
+        float age = SteamNetworkingUtils.GetLocalPingLocation(out var pingLocation);
+
+        while (age < 0f)
+        {
+            yield return new WaitForSeconds(0.5f);
+            age = SteamNetworkingUtils.GetLocalPingLocation(out pingLocation);
+        }
+
+        // check we still own the lobby
+        if (SteamMatchmaking.GetLobbyOwner(CurrentLobby) != SteamUser.GetSteamID())
+            yield break;
+
+        SteamNetworkingUtils.ConvertPingLocationToString(ref pingLocation, out string locationString, 256);
+        SteamMatchmaking.SetLobbyData(CurrentLobby, LobbyLocationKey, locationString);
     }
 
     public static void JoinLobby(CSteamID id)
