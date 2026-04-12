@@ -51,7 +51,7 @@ namespace Netick.Examples.Steam
                 if (!AssociatedLobby.IsValid())
                     yield break;
                 pingStr = SteamMatchmaking.GetLobbyData(AssociatedLobby, SteamLobbyExample.LobbyLocationKey);
-                yield return null;
+                yield return new WaitForSeconds(.5f);
             }
 
             if (!SteamNetworkingUtils.ParsePingLocationString(pingStr, out var lobbyLocation))
