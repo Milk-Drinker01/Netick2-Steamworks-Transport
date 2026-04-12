@@ -15,10 +15,13 @@ public class SteamLobbyExample : MonoBehaviour
     public static event Action<List<CSteamID>> OnLobbySearchFinished;
     public static event Action OnGameServerShutdown;
     public static CSteamID CurrentLobby;
+    static CSteamID _lobbyOwner;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void OnLoad()
     {
+        CurrentLobby = default;
+        _lobbyOwner = default;
         OnLobbyEnteredEvent = delegate { };
         OnLobbyLeftEvent = delegate { };
         OnLobbySearchStart = delegate { };
@@ -29,6 +32,7 @@ public class SteamLobbyExample : MonoBehaviour
     public static bool OwnsCurrentLobby => SteamMatchmaking.GetLobbyOwner(CurrentLobby) == SteamUser.GetSteamID();
 
     [SerializeField] bool AutoStartServerWithLobby = true;
+    [SerializeField] bool LeaveLobbyWhenHostLeaves = true;
 
     [Header("Lobby Host Settings")]
     [SerializeField] int NumberOfSlots = 16;
@@ -82,12 +86,23 @@ public class SteamLobbyExample : MonoBehaviour
             CSteamID lobby = (CSteamID)callback.m_ulSteamIDLobby;
             Debug.Log($"You joined {SteamMatchmaking.GetLobbyData(lobby, "LobbyName")}");
             CurrentLobby = lobby;
+            _lobbyOwner = SteamMatchmaking.GetLobbyOwner(lobby);
             OnLobbyEnteredEvent?.Invoke(lobby);
 
             if (AutoStartServerWithLobby && !OwnsCurrentLobby)
                 ConnectToGameServer();
         }
         Callback<LobbyEnter_t>.Create(OnLobbyEntered);
+
+        void OnLobbyChatUpdate(LobbyChatUpdate_t callback)
+        {
+            bool memberLeft = (callback.m_rgfChatMemberStateChange & (uint)EChatMemberStateChange.k_EChatMemberStateChangeLeft) != 0
+                           || (callback.m_rgfChatMemberStateChange & (uint)EChatMemberStateChange.k_EChatMemberStateChangeDisconnected) != 0;
+
+            if (memberLeft && LeaveLobbyWhenHostLeaves && (CSteamID)callback.m_ulSteamIDUserChanged == _lobbyOwner)
+                LeaveLobby();
+        }
+        Callback<LobbyChatUpdate_t>.Create(OnLobbyChatUpdate);
 
         void OnLobbyGameCreated(LobbyGameCreated_t callback)
         {

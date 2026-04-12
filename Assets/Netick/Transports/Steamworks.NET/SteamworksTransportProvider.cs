@@ -61,6 +61,7 @@ namespace Netick.Transports.Steamworks
             public ulong PlayerSteamID;
             public override IEndPoint EndPoint => new IPEndPoint(IPAddress.Any, 4050).ToNetickEndPoint();
             public override int Mtu => Constants.k_cbMaxSteamNetworkingSocketsMessageSizeSend;
+            
             public unsafe override void Send(IntPtr ptr, int length)
             {
                 SteamNetworkingSockets.SendMessageToConnection(Connection, ptr, (uint)length, SteamSendFlag, out long _);
@@ -272,6 +273,7 @@ namespace Netick.Transports.Steamworks
             SteamNetworkingSockets.FlushMessagesOnConnection(steamworksonnection.Connection);
             SteamNetworkingSockets.CloseConnection(steamworksonnection.Connection, 0, "Disconnected by server", false);
             InternalConnections.Remove(steamworksonnection.Connection);
+            _freeConnections.Enqueue(steamworksonnection);
 
             Debug.Log($"[{nameof(SteamworksTransport)}] - Player {(steamworksonnection).PlayerSteamID} Disconnected from server.");
         }
@@ -284,7 +286,8 @@ namespace Netick.Transports.Steamworks
             {
                 case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_Connecting: ServerOnConnecting(param); break;
                 case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_Connected: ServerOnConnected(param); break;
-                case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_ClosedByPeer: ServerOnDisconnected(param); break;
+                case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_ClosedByPeer:
+                case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_ProblemDetectedLocally: ServerOnDisconnected(param); break;
             }
         }
 
@@ -310,6 +313,13 @@ namespace Netick.Transports.Steamworks
         {
             ulong clientSteamID = param.m_info.m_identityRemote.GetSteamID64();
 
+            if (_freeConnections.Count == 0)
+            {
+                Debug.LogWarning($"[{nameof(SteamworksTransport)}] - No free connections available for Steam user {clientSteamID}.");
+                SteamNetworkingSockets.CloseConnection(param.m_hConn, 0, "No free connections", false);
+                return;
+            }
+
             var steamworksConnection = _freeConnections.Dequeue();
             steamworksConnection.Connection = param.m_hConn;
             steamworksConnection.PlayerSteamID = clientSteamID;
@@ -320,17 +330,25 @@ namespace Netick.Transports.Steamworks
                 NetworkPeer.OnConnected(InternalConnections[param.m_hConn]);
             }
             else
+            {
                 Debug.LogWarning($"[{nameof(SteamworksTransport)}] - Failed to connect client with ID {clientSteamID}, client already connected.");
-
+                _freeConnections.Enqueue(steamworksConnection);
+            }
         }
 
         //void OnDisconnected(Steamworks.Data.Connection connection, ConnectionInfo info)
         void ServerOnDisconnected(SteamNetConnectionStatusChangedCallback_t param)
         {
-            Debug.Log($"[{nameof(SteamworksTransport)}] - Disconnected Steam user {InternalConnections[param.m_hConn].PlayerSteamID}");
+            if (!InternalConnections.TryGetValue(param.m_hConn, out var conn))
+            {
+                SteamNetworkingSockets.CloseConnection(param.m_hConn, 0, "Unknown connection", false);
+                return;
+            }
 
-            _freeConnections.Enqueue(InternalConnections[param.m_hConn]);
-            NetworkPeer.OnDisconnected(InternalConnections[param.m_hConn], TransportDisconnectReason.Timeout);
+            Debug.Log($"[{nameof(SteamworksTransport)}] - Disconnected Steam user {conn.PlayerSteamID}");
+
+            _freeConnections.Enqueue(conn);
+            NetworkPeer.OnDisconnected(conn, TransportDisconnectReason.Timeout);
             InternalConnections.Remove(param.m_hConn);
 
             SteamNetworkingSockets.CloseConnection(param.m_hConn, 0, "Graceful disconnect", false);
