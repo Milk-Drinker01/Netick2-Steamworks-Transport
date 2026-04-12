@@ -199,12 +199,12 @@ public class SteamLobbyExample : MonoBehaviour
     void OnLobbyCreated(LobbyCreated_t callback)
     {
         CSteamID lobby = (CSteamID)callback.m_ulSteamIDLobby;
+        CurrentLobby = lobby;
+
         SteamMatchmaking.SetLobbyData(lobby, "GameName", GameName);
         SteamMatchmaking.SetLobbyData(lobby, LobbyNameKey, $"{SteamFriends.GetPersonaName()}'s lobby.");
         StartCoroutine(WaitForPingLocation());
         SteamMatchmaking.SetLobbyJoinable(lobby, true);
-
-        CurrentLobby = lobby;
 
         Debug.Log($"lobby {lobby} was created");
 
