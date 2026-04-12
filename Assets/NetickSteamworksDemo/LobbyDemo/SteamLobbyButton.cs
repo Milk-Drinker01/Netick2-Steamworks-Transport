@@ -36,6 +36,8 @@ namespace Netick.Examples.Steam
 
             while (age < 0f)
             {
+                if (generation != currentGeneration || !gameObject.activeInHierarchy)
+                    yield break;
                 yield return new WaitForSeconds(0.5f);
                 age = SteamNetworkingUtils.GetLocalPingLocation(out pingLocation);
             }
@@ -46,12 +48,13 @@ namespace Netick.Examples.Steam
             string pingStr = SteamMatchmaking.GetLobbyData(AssociatedLobby, SteamLobbyExample.LobbyLocationKey);
             while (string.IsNullOrEmpty(pingStr))
             {
-                if (generation != currentGeneration)
+                if (generation != currentGeneration || !gameObject.activeInHierarchy)
                     yield break;
                 if (!AssociatedLobby.IsValid())
                     yield break;
+                SteamMatchmaking.RequestLobbyData(AssociatedLobby);
+                yield return new WaitForSeconds(1f);
                 pingStr = SteamMatchmaking.GetLobbyData(AssociatedLobby, SteamLobbyExample.LobbyLocationKey);
-                yield return new WaitForSeconds(.5f);
             }
 
             if (!SteamNetworkingUtils.ParsePingLocationString(pingStr, out var lobbyLocation))
