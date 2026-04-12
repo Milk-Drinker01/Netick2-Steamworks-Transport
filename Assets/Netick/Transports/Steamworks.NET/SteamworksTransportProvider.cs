@@ -16,6 +16,7 @@ namespace Netick.Transports.Steamworks
     {
         [SerializeField]
         SteamSendType SteamDataSendType = SteamSendType.NoNagle;
+        public static SteamSendType SteamSendTypeReliable = SteamSendType.ReliableNoNagle;
 
         [SerializeField]
         bool FlushMessages = true;
@@ -34,7 +35,8 @@ namespace Netick.Transports.Steamworks
             Unreliable = 0,
             Reliable = 1,
             NoNagle = 2,
-            NoDelay = 3
+            NoDelay = 3,
+            ReliableNoNagle = 4
         }
     }
 
@@ -65,9 +67,10 @@ namespace Netick.Transports.Steamworks
                 if (SteamworksTransport.ForceFlush)
                     SteamNetworkingSockets.FlushMessagesOnConnection(Connection);
             }
+
             public unsafe override void SendUserData(IntPtr ptr, int length, TransportDeliveryMethod method)
             {
-                int sendType = method == TransportDeliveryMethod.Unreliable ? Constants.k_nSteamNetworkingSend_Unreliable : Constants.k_nSteamNetworkingSend_Reliable;
+                int sendType = method == TransportDeliveryMethod.Unreliable ? Constants.k_nSteamNetworkingSend_UnreliableNoNagle : Constants.k_nSteamNetworkingSend_ReliableNoNagle;
                 SteamNetworkingSockets.SendMessageToConnection(Connection, ptr, (uint)length, sendType, out long _);
             }
         }
@@ -357,9 +360,9 @@ namespace Netick.Transports.Steamworks
         {
             switch (param.m_info.m_eState)
             {
-                case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_Connecting: ServerOnConnecting(param); break;
-                case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_Connected: ServerOnConnected(param); break;
-                case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_ClosedByPeer: ServerOnDisconnected(param); break;
+                case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_Connecting: ClientOnConnecting(param); break;
+                case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_Connected: ClientOnConnected(param); break;
+                case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_ClosedByPeer: ClientOnDisconnected(param); break;
             }
         }
 
