@@ -7,7 +7,7 @@
 - [Steamworks.NET](https://github.com/rlabrecque/Steamworks.NET)
 
 ## Usage
-Steam provides several APIs for games, including matchmaking. In order to connect using Steam you need to pass LobbyID (or friend's SteamID) as an address to `Connect` method of sandbox. 
+Steam provides several APIs for games, including matchmaking. In order to connect using Steam, you need to pass the Lobby owners SteamID as an address to Connect method of sandbox.
 ```cs
 var sandbox = Netick.Unity.Network.StartAsClient(Transport, Port, SandboxPrefab);
 sandbox.Connect(Port, CurrentLobby.Owner.Id.ToString());
