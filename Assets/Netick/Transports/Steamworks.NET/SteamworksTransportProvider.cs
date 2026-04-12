@@ -52,6 +52,10 @@ namespace Netick.Transports.Steamworks
             OnNetickServerStarted = delegate { };
             OnNetickClientStarted = delegate { };
             OnNetickShutdownEvent = delegate { };
+            SteamSendFlag = 0;
+            ForceFlush = false;
+            InternalConnections.Clear();
+            clientToServerConnection = null;
         }
 
         public class SteamworksConnection : TransportConnection

@@ -106,6 +106,9 @@ namespace Netick.Examples.Steam
         }
 
         static int numSpheres = 0;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void OnLoad() => numSpheres = 0;
         private void MoveAndRotate(SteamFPSInput input)
         {
             // rotation

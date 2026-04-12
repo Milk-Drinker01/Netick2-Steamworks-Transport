@@ -303,6 +303,6 @@ public class SteamLobbyExample : MonoBehaviour
         OnGameServerShutdown?.Invoke();
         if (OwnsCurrentLobby)
             SteamMatchmaking.SetLobbyGameServer(CurrentLobby, 0, 0, (CSteamID)0);
-        Debug.Log(SteamMatchmaking.GetLobbyGameServer(CurrentLobby, out uint ip, out ushort port, out CSteamID serverID));
+        //Debug.Log(SteamMatchmaking.GetLobbyGameServer(CurrentLobby, out uint ip, out ushort port, out CSteamID serverID));
     }
 }

@@ -9,6 +9,9 @@ namespace Netick.Examples.Steam
     {
         public static SteamLobbyMenu instance;
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void OnLoad() => instance = null;
+
         public GameObject SearchMenu;
         public GameObject LobbyMenu;
         public GameObject LobbyContent;
