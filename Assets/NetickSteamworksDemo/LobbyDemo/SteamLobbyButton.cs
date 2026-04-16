@@ -46,10 +46,10 @@ namespace Netick.Examples.Steam
                 yield break;
 
             string pingStr = SteamMatchmaking.GetLobbyData(AssociatedLobby, SteamLobbyExample.LobbyLocationKey);
-            while (string.IsNullOrEmpty(pingStr))
+            while (string.IsNullOrEmpty(pingStr) &&
+                generation == currentGeneration &&
+                gameObject.activeInHierarchy)
             {
-                if (generation != currentGeneration || !gameObject.activeInHierarchy)
-                    yield break;
                 if (!AssociatedLobby.IsValid())
                     yield break;
                 SteamMatchmaking.RequestLobbyData(AssociatedLobby);
